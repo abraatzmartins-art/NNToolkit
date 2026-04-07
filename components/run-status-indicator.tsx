@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useApifyStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -23,76 +23,117 @@ export function RunStatusIndicator() {
   const { currentRun, setRun, results } = useApifyStore();
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const runIdRef = useRef<string | null>(null);
 
-  const config = statusConfig[currentRun.status] || statusConfig.idle;
-  const Icon = config.icon;
+  // Keep runIdRef in sync
+  useEffect(() => {
+    if (currentRun.runId) {
+      runIdRef.current = currentRun.runId;
+    }
+  }, [currentRun.runId]);
+
+  // Cancel polling helper
+  const stopPolling = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  }, []);
+
+  // Reset on idle
+  useEffect(() => {
+    if (currentRun.status === 'idle') {
+      stopPolling();
+      runIdRef.current = null;
+      startTimeRef.current = Date.now();
+    }
+  }, [currentRun.status, stopPolling]);
 
   // Poll for status updates
   useEffect(() => {
-    if (currentRun.status === 'running' && currentRun.runId) {
-      startTimeRef.current = Date.now();
+    if (currentRun.status !== 'running' || !currentRun.runId) return;
 
-      const poll = async () => {
-        try {
-          const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-          setRun({ elapsed });
+    startTimeRef.current = Date.now();
+    const runId = currentRun.runId;
 
-          // Get API key from localStorage and send as header
-          const apiKey = typeof window !== 'undefined' ? localStorage.getItem('apify_api_key') : null;
-          if (!apiKey) {
-            setRun({ status: 'failed', error: 'Chave API não configurada. Vá em Configurações.' });
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-            return;
-          }
+    const poll = async () => {
+      try {
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        setRun({ elapsed });
 
-          const res = await fetch(`/api/apify/status/${currentRun.runId}`, {
-            headers: { 'x-apify-key': apiKey },
+        // Send x-apify-key only if available in localStorage
+        // Server will fallback to process.env.APIFY_API_KEY
+        const apiKey = typeof window !== 'undefined' ? localStorage.getItem('apify_api_key') : null;
+        const headers: Record<string, string> = {};
+        if (apiKey) {
+          headers['x-apify-key'] = apiKey;
+        }
+
+        const res = await fetch(`/api/apify/status/${runId}`, { headers });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          setRun({
+            status: 'failed',
+            error: errorData.error || `Erro do servidor: ${res.status}`,
           });
-          const data = await res.json();
+          stopPolling();
+          return;
+        }
 
-          if (!res.ok) {
-            setRun({ status: 'failed', error: data.error || 'Erro ao verificar status' });
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-            return;
-          }
+        const data = await res.json();
 
-          if (data.status === 'SUCCEEDED') {
-            setRun({ status: 'completed', progress: 100 });
+        if (data.status === 'SUCCEEDED') {
+          setRun({ status: 'completed', progress: 100 });
+          stopPolling();
 
-            // Fetch results
-            const resultsRes = await fetch(`/api/apify/results/${currentRun.runId}?limit=200`, {
-              headers: { 'x-apify-key': apiKey },
+          // Fetch results
+          const resultHeaders: Record<string, string> = {};
+          if (apiKey) resultHeaders['x-apify-key'] = apiKey;
+
+          try {
+            const resultsRes = await fetch(`/api/apify/results/${runId}?limit=200`, {
+              headers: resultHeaders,
             });
             const resultsData = await resultsRes.json();
-            if (resultsRes.ok) {
-              useApifyStore.getState().setResults(resultsData.items || []);
+            if (resultsRes.ok && resultsData.items) {
+              useApifyStore.getState().setResults(resultsData.items);
             }
-
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          } else if (data.status === 'FAILED' || data.status === 'ABORTED' || data.status === 'TIMED-OUT') {
-            setRun({ status: 'failed', error: `Execução falhou: ${data.status}` });
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          } else {
-            setRun({
-              progress: typeof data.progress === 'number' ? data.progress : Math.min(elapsed * 2, 95),
-            });
+          } catch (fetchErr) {
+            console.error('Error fetching results:', fetchErr);
           }
-        } catch (err: any) {
-          console.error('Poll error:', err);
+        } else if (data.status === 'FAILED' || data.status === 'ABORTED' || data.status === 'TIMED-OUT') {
+          const errorMsg = data.status === 'FAILED'
+            ? (data.message || data.error || 'Falha na execução do ator')
+            : `Execução ${data.status}`;
+          setRun({ status: 'failed', error: errorMsg });
+          stopPolling();
+        } else {
+          // RUNNING, READY, PENDING etc.
+          const estimatedProgress = typeof data.progress === 'number'
+            ? data.progress
+            : Math.min(elapsed * 2, 95);
+          setRun({ progress: estimatedProgress });
         }
-      };
+      } catch (err: any) {
+        console.error('Poll error:', err);
+        // Don't fail on network errors - keep polling
+      }
+    };
 
-      // Poll immediately, then every 3 seconds
-      poll();
-      pollIntervalRef.current = setInterval(poll, 3000);
+    // Poll immediately, then every 3 seconds
+    poll();
+    pollIntervalRef.current = setInterval(poll, 3000);
 
-      return () => {
-        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      };
-    }
-  }, [currentRun.status, currentRun.runId, setRun]);
+    return () => {
+      stopPolling();
+    };
+  }, [currentRun.status, currentRun.runId, setRun, stopPolling]);
 
   if (currentRun.status === 'idle') return null;
+
+  const config = statusConfig[currentRun.status] || statusConfig.idle;
+  const Icon = config.icon;
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -122,7 +163,7 @@ export function RunStatusIndicator() {
               currentRun.status === 'running' && 'animate-spin'
             )} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{config.label}</span>
               {currentRun.runId && (
@@ -131,25 +172,44 @@ export function RunStatusIndicator() {
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {currentRun.status === 'running' && `Tempo: ${formatTime(currentRun.elapsed)}`}
+            <p className="text-xs text-muted-foreground break-words">
+              {currentRun.status === 'running' && (
+                <>
+                  Tempo: {formatTime(currentRun.elapsed)}
+                  {!currentRun.runId && ' • Aguardando resposta do servidor...'}
+                </>
+              )}
               {currentRun.status === 'completed' && `${results.length} resultados obtidos`}
-              {currentRun.status === 'failed' && (currentRun.error || 'Erro desconhecido')}
+              {currentRun.status === 'failed' && (
+                <>
+                  {currentRun.error || 'Erro desconhecido'}
+                  {!currentRun.runId && ' • Verifique se a chave API está configurada'}
+                </>
+              )}
             </p>
           </div>
         </div>
-        {currentRun.status === 'running' && (
+        {(currentRun.status === 'running' || currentRun.status === 'failed') && (
           <Button
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs shrink-0"
             onClick={() => {
-              if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-              setRun({ status: 'idle', runId: null, progress: 0, elapsed: 0 });
+              stopPolling();
+              setRun({ status: 'idle', runId: null, progress: 0, elapsed: 0, error: null });
             }}
           >
-            <Ban className="h-3 w-3 mr-1" />
-            Cancelar
+            {currentRun.status === 'running' ? (
+              <>
+                <Ban className="h-3 w-3 mr-1" />
+                Cancelar
+              </>
+            ) : (
+              <>
+                <XCircle className="h-3 w-3 mr-1" />
+                Fechar
+              </>
+            )}
           </Button>
         )}
       </div>

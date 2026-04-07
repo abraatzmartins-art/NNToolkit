@@ -3,7 +3,7 @@ import { getHistory, deleteHistoryItem, clearHistory } from '@/lib/db';
 
 export async function GET() {
   try {
-    const history = getHistory(50);
+    const history = await getHistory(50);
     return NextResponse.json(history);
   } catch (error) {
     console.error('Error fetching history:', error);
@@ -17,11 +17,11 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (id) {
-      deleteHistoryItem(id);
+      await deleteHistoryItem(id);
       return NextResponse.json({ success: true });
     }
 
-    clearHistory();
+    await clearHistory();
     return NextResponse.json({ success: true, message: 'Histórico limpo' });
   } catch (error) {
     console.error('Error deleting history:', error);

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiKeyFromRequest } from '@/lib/db';
-import type { ActorParamField } from '@/lib/apify-catalog';
+import { getApiKeyFromRequest, getApiKeyFromDb } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Parâmetro "actorId" é obrigatório' }, { status: 400 });
     }
 
-    const apiKey = getApiKeyFromRequest(request);
+    const apiKey = getApiKeyFromRequest(request) || await getApiKeyFromDb();
     if (!apiKey) {
       return NextResponse.json(
         { error: 'Chave API não configurada. Vá em Configurações e salve sua chave API.' },
@@ -65,13 +64,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function convertApifySchema(schema: any): ActorParamField[] {
+function convertApifySchema(schema: any): any[] {
   if (!schema) return [];
   const properties = schema.properties || {};
   const required: string[] = schema.required || [];
   return Object.entries(properties).map(([key, prop]: [string, any]) => {
-    let type: ActorParamField['type'] = 'text';
-    let options: ActorParamField['options'] | undefined;
+    let type: string = 'text';
+    let options: any[] | undefined;
     switch (prop.type) {
       case 'string':
         if (prop.enum && prop.enum.length > 0) {

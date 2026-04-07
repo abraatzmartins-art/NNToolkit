@@ -1,0 +1,3 @@
+{
+  "/api/apify/status/[runId]/route": "app/api/apify/status/[runId]/route.js"
+}

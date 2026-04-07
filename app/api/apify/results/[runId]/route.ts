@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiKeyFromRequest, updateHistoryResults } from '@/lib/db';
+import { getApiKeyFromRequest, getApiKeyFromDb, saveResults, getSavedResults } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +11,18 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '100');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const apiKey = getApiKeyFromRequest(request);
+    if (!runId) {
+      return NextResponse.json({ error: 'runId é obrigatório' }, { status: 400 });
+    }
+
+    // Try to get saved results from Turso first
+    const saved = await getSavedResults(runId, limit, offset);
+    if (saved.length > 0) {
+      return NextResponse.json({ items: saved, total: saved.length, limit, offset, cached: true });
+    }
+
+    // If not cached, fetch from Apify
+    const apiKey = getApiKeyFromRequest(request) || await getApiKeyFromDb();
     if (!apiKey) {
       return NextResponse.json({ error: 'Chave API não configurada' }, { status: 400 });
     }
@@ -28,11 +39,14 @@ export async function GET(
     }
 
     const data = await apifyResponse.json();
-    updateHistoryResults(runId, data.length);
+    const items = Array.isArray(data) ? data : [];
 
-    return NextResponse.json({ items: data, total: data.length, limit, offset });
+    // Save to Turso for future use
+    await saveResults(runId, items);
+
+    return NextResponse.json({ items, total: items.length, limit, offset, cached: false });
   } catch (error: any) {
-    console.error('Error fetching results:', error);
+    console.error('[Apify Results] Error:', error);
     return NextResponse.json({ error: 'Erro ao buscar resultados' }, { status: 500 });
   }
 }

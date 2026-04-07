@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const customActor = addCustomActor({
+    const customActor = await addCustomActor({
       actorId,
       name,
       description: description || '',

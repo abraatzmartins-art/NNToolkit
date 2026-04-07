@@ -6,7 +6,7 @@ import {
   Search, MapPin, Camera, MessageCircle, ShoppingCart, Globe,
   Briefcase, Youtube, Plane, Home, Star, Mail, Package, Rss,
   Settings, History, ChevronDown, ChevronRight, Users, Sparkles,
-  Building2, TrendingUp, FileSearch, Landmark, Flag, Plus,
+  Building2, TrendingUp, FileSearch, Landmark, Flag, Plus, Bot, ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApifyStore } from '@/lib/store';
@@ -40,7 +40,7 @@ export function ApifySidebar() {
   const {
     selectedActor, sidebarOpen, setSidebarOpen, setActor, setView,
     activeCategory, setActiveCategory, searchQuery, setSearchQuery,
-    customActors, allActors,
+    customActors, allActors, user, currentView,
   } = useApifyStore();
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -229,6 +229,26 @@ export function ApifySidebar() {
 
       {/* Bottom actions */}
       <div className="border-t p-2 space-y-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn("w-full justify-start gap-2", currentView === 'ai-search' && 'bg-accent')}
+          onClick={() => { setView('ai-search'); setMobileOpen(false); }}
+        >
+          <Bot className="h-4 w-4 text-purple-500" />
+          <span>Busca com IA</span>
+        </Button>
+        {user?.role === 'admin' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("w-full justify-start gap-2", currentView === 'admin' && 'bg-accent')}
+            onClick={() => { setView('admin'); setMobileOpen(false); }}
+          >
+            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            <span>Admin</span>
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"

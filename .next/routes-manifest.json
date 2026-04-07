@@ -1,0 +1,206 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/apify/results/[runId]",
+      "regex": "^/api/apify/results/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPrunId": "nxtPrunId"
+      },
+      "namedRegex": "^/api/apify/results/(?<nxtPrunId>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/apify/status/[runId]",
+      "regex": "^/api/apify/status/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPrunId": "nxtPrunId"
+      },
+      "namedRegex": "^/api/apify/status/(?<nxtPrunId>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api",
+      "regex": "^/api(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api(?:/)?$"
+    },
+    {
+      "page": "/api/ai/search",
+      "regex": "^/api/ai/search(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ai/search(?:/)?$"
+    },
+    {
+      "page": "/api/apify/actor-info",
+      "regex": "^/api/apify/actor\\-info(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/apify/actor\\-info(?:/)?$"
+    },
+    {
+      "page": "/api/apify/custom-actors",
+      "regex": "^/api/apify/custom\\-actors(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/apify/custom\\-actors(?:/)?$"
+    },
+    {
+      "page": "/api/apify/discover",
+      "regex": "^/api/apify/discover(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/apify/discover(?:/)?$"
+    },
+    {
+      "page": "/api/apify/export",
+      "regex": "^/api/apify/export(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/apify/export(?:/)?$"
+    },
+    {
+      "page": "/api/apify/install-actor",
+      "regex": "^/api/apify/install\\-actor(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/apify/install\\-actor(?:/)?$"
+    },
+    {
+      "page": "/api/apify/run",
+      "regex": "^/api/apify/run(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/apify/run(?:/)?$"
+    },
+    {
+      "page": "/api/auth/approve",
+      "regex": "^/api/auth/approve(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/approve(?:/)?$"
+    },
+    {
+      "page": "/api/auth/login",
+      "regex": "^/api/auth/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/login(?:/)?$"
+    },
+    {
+      "page": "/api/auth/logout",
+      "regex": "^/api/auth/logout(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/logout(?:/)?$"
+    },
+    {
+      "page": "/api/auth/me",
+      "regex": "^/api/auth/me(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/me(?:/)?$"
+    },
+    {
+      "page": "/api/auth/register",
+      "regex": "^/api/auth/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/register(?:/)?$"
+    },
+    {
+      "page": "/api/auth/reject",
+      "regex": "^/api/auth/reject(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/reject(?:/)?$"
+    },
+    {
+      "page": "/api/auth/requests",
+      "regex": "^/api/auth/requests(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/requests(?:/)?$"
+    },
+    {
+      "page": "/api/auth/seed",
+      "regex": "^/api/auth/seed(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/seed(?:/)?$"
+    },
+    {
+      "page": "/api/auth/users",
+      "regex": "^/api/auth/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/users(?:/)?$"
+    },
+    {
+      "page": "/api/history",
+      "regex": "^/api/history(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/history(?:/)?$"
+    },
+    {
+      "page": "/api/settings",
+      "regex": "^/api/settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/settings(?:/)?$"
+    },
+    {
+      "page": "/api/stats",
+      "regex": "^/api/stats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/stats(?:/)?$"
+    },
+    {
+      "page": "/api/templates",
+      "regex": "^/api/templates(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/templates(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

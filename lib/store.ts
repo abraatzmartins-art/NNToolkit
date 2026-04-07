@@ -2,7 +2,14 @@ import { create } from 'zustand';
 import { apifyActors, type ApifyActor, type ActorCategory, type ActorParamField } from './apify-catalog';
 
 export type OutputFormat = 'json' | 'csv' | 'excel' | 'pdf';
-export type AppView = 'catalog' | 'discover' | 'configure' | 'results' | 'history' | 'settings';
+export type AppView = 'catalog' | 'discover' | 'configure' | 'results' | 'history' | 'settings' | 'admin' | 'ai-search' | 'auth';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+}
 
 export interface RunState {
   status: 'idle' | 'running' | 'completed' | 'failed';
@@ -25,6 +32,10 @@ export interface HistoryItem {
 }
 
 interface ApifyStore {
+  user: User | null;
+  isAuthenticated: boolean;
+  authLoading: boolean;
+  authView: 'login' | 'register';
   selectedActor: ApifyActor | null;
   currentView: AppView;
   customActors: ApifyActor[];
@@ -60,6 +71,10 @@ interface ApifyStore {
   setSidebarOpen: (open: boolean) => void;
   setActiveCategory: (category: ActorCategory | 'all') => void;
   setApiKeyConfigured: (configured: boolean) => void;
+  setUser: (user: User | null) => void;
+  setAuthLoading: (loading: boolean) => void;
+  setAuthView: (view: 'login' | 'register') => void;
+  logout: () => void;
   resetAll: () => void;
 }
 
@@ -110,6 +125,10 @@ function dbActorToApifyActor(dbActor: any): ApifyActor {
 }
 
 export const useApifyStore = create<ApifyStore>((set, get) => ({
+  user: null,
+  isAuthenticated: false,
+  authLoading: true,
+  authView: 'login',
   selectedActor: null,
   currentView: 'catalog',
   customActors: [],
@@ -208,6 +227,16 @@ export const useApifyStore = create<ApifyStore>((set, get) => ({
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setActiveCategory: (category) => set({ activeCategory: category }),
   setApiKeyConfigured: (configured) => set({ apiKeyConfigured: configured }),
+
+  setUser: (user) => set({ user, isAuthenticated: !!user }),
+  setAuthLoading: (loading) => set({ authLoading: loading }),
+  setAuthView: (view) => set({ authView: view }),
+
+  logout: () => {
+    localStorage.removeItem('session_token');
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    set({ user: null, isAuthenticated: false, currentView: 'catalog' });
+  },
 
   resetAll: () =>
     set({

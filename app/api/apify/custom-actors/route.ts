@@ -3,7 +3,7 @@ import { getCustomActors, deleteCustomActor } from '@/lib/db';
 
 export async function GET() {
   try {
-    const customActors = getCustomActors();
+    const customActors = await getCustomActors();
     return NextResponse.json({ actors: customActors });
   } catch (error: any) {
     console.error('Error fetching custom actors:', error);
@@ -20,7 +20,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Parâmetro "id" é obrigatório' }, { status: 400 });
     }
 
-    deleteCustomActor(id);
+    await deleteCustomActor(id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

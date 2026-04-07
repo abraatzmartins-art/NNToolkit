@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[97367,["/_next/static/chunks/0wsb-wyfaqbqk.js","/_next/static/chunks/0fsnh5gnj93zc.js","/_next/static/chunks/06jq98m52gt_w.js"],"ViewportBoundary"]
+3:I[97367,["/_next/static/chunks/0wsb-wyfaqbqk.js","/_next/static/chunks/0fsnh5gnj93zc.js","/_next/static/chunks/06jq98m52gt_w.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+5:I[27201,["/_next/static/chunks/0wsb-wyfaqbqk.js","/_next/static/chunks/0fsnh5gnj93zc.js","/_next/static/chunks/06jq98m52gt_w.js"],"IconMark"]
+0:{"rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Apify Research Hub - Pesquisa de Dados Inteligente"}],["$","meta","1",{"name":"description","content":"Plataforma completa para pesquisa e coleta de dados usando Apify APIs. Extraia dados de Google, redes sociais, e-commerce e muito mais."}],["$","link","2",{"rel":"icon","href":"/logo.png"}],["$","$L5","3",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"szzx6W74s9j2hbbvyvLfm"}
