@@ -70,16 +70,12 @@ Regras importantes:
 6. Responda APENAS com o JSON, sem markdown ou texto adicional
 7. A explicação deve ser em português do Brasil`;
 
-    const { default: ZAI } = await import('z-ai-web-dev-sdk');
-    const zai = await ZAI.create();
+    const { aiChatCompletion } = await import('@/lib/zai');
 
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: query },
-      ],
-      temperature: 0.3,
-    });
+    const completion = await aiChatCompletion([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: query },
+    ]);
 
     let messageContent = completion.choices[0]?.message?.content || '';
 
@@ -117,7 +113,8 @@ Regras importantes:
         if (!apiKey) {
           runError = 'Chave API não configurada. Não foi possível executar automaticamente.';
         } else {
-          const apifyRes = await fetch(`https://api.apify.com/v2/acts/${aiResponse.actorId}/runs`, {
+          const encodedActorId = aiResponse.actorId.replace(/\//g, '~');
+          const apifyRes = await fetch(`https://api.apify.com/v2/acts/${encodedActorId}/runs`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${apiKey}`,

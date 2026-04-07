@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
     console.log(`[Apify Run] Starting actor: ${actorId}`);
     console.log(`[Apify Run] API key source: ${request.headers.get('x-apify-key') ? 'header' : process.env.APIFY_API_KEY ? 'env-var' : 'db'}`);
 
-    const apifyResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs`, {
+    // Apify API requires slashes in actor IDs to be encoded as tildes
+    const encodedActorId = actorId.replace(/\//g, '~');
+    const apifyResponse = await fetch(`https://api.apify.com/v2/acts/${encodedActorId}/runs`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,

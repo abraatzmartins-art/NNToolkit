@@ -34,7 +34,7 @@ export function AISearchView() {
   const { setActor, setView, setFormValues, setSelectedFields, setRun, currentRun, actors: catalogActors } = useApifyStore();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [autoExecute, setAutoExecute] = useState(false);
+  const [autoExecute, setAutoExecute] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -288,7 +288,7 @@ export function AISearchView() {
       {/* Suggestions (show when no messages) */}
       {messages.length === 0 && !loading && (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground font-medium">Exemplos do que você pode pedir:</p>
+          <p className="text-xs text-muted-foreground font-medium">Exemplos — a busca será executada automaticamente:</p>
           <div className="grid gap-2">
             {suggestions.map((s, i) => (
               <button
@@ -330,7 +330,7 @@ export function AISearchView() {
                 onChange={e => setAutoExecute(e.target.checked)}
                 className="rounded"
               />
-              Executar automaticamente
+              Executar automaticamente (ativado)
             </label>
             <Button
               onClick={handleSearch}
