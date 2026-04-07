@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiKey } from '@/lib/db';
+import { getApiKeyFromRequest } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,10 +11,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Parâmetro "query" é obrigatório' }, { status: 400 });
     }
 
-    const apiKey = getApiKey();
+    const apiKey = getApiKeyFromRequest(request);
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Chave API do Apify não configurada. Vá em Configurações para definir sua chave.' },
+        { error: 'Chave API não configurada. Vá em Configurações e salve sua chave API.' },
         { status: 400 }
       );
     }
@@ -46,10 +46,7 @@ export async function GET(request: NextRequest) {
       name: item.title || item.name || 'Sem nome',
       description: item.description || '',
       username: item.username || '',
-      stats: {
-        totalRuns: item.stats?.totalRuns || 0,
-        uniqueUsers: item.stats?.uniqueUsers || 0,
-      },
+      stats: { totalRuns: item.stats?.totalRuns || 0, uniqueUsers: item.stats?.uniqueUsers || 0 },
       url: `https://apify.com/${item.username}/${item.name}`,
       image: item.image || null,
     }));

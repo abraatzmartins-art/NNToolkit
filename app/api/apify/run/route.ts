@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiKey, addToHistory } from '@/lib/db';
+import { getApiKeyFromRequest } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,15 +10,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'actorId e input são obrigatórios' }, { status: 400 });
     }
 
-    const apiKey = getApiKey();
+    const apiKey = getApiKeyFromRequest(request);
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Chave API do Apify não configurada. Vá em Configurações para definir sua chave.' },
+        { error: 'Chave API não configurada. Vá em Configurações e salve sua chave API.' },
         { status: 400 }
       );
     }
 
-    // Call Apify API to start actor run
     const apifyResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs`, {
       method: 'POST',
       headers: {
@@ -39,19 +38,9 @@ export async function POST(request: NextRequest) {
     const runData = await apifyResponse.json();
     const runId = runData.data?.id || runData.id;
 
-    // Save to in-memory history
-    const historyItem = addToHistory({
-      actorId,
-      actorName: actorId,
-      inputParams: JSON.stringify(input),
-      status: 'running',
-      runId,
-    });
-
     return NextResponse.json({
       runId,
       status: runData.data?.status || runData.status || 'RUNNING',
-      historyId: historyItem.id,
     });
   } catch (error: any) {
     console.error('Error running actor:', error);

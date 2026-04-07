@@ -25,37 +25,24 @@ export interface HistoryItem {
 }
 
 interface ApifyStore {
-  // Actor selection
   selectedActor: ApifyActor | null;
   currentView: AppView;
-
-  // Custom actors from DB
   customActors: ApifyActor[];
-
-  // Form
   formValues: Record<string, any>;
-
-  // Output
   outputFormat: OutputFormat;
   selectedFields: string[];
   maxResults: number;
-
-  // Run
   currentRun: RunState;
   results: any[];
-
-  // History
   searchHistory: HistoryItem[];
-
-  // UI
   searchQuery: string;
   sidebarOpen: boolean;
   activeCategory: ActorCategory | 'all';
+  apiKeyConfigured: boolean;
 
-  // Computed
   allActors: () => ApifyActor[];
+  getApiKeyHeaders: () => Record<string, string>;
 
-  // Actions
   setActor: (actor: ApifyActor | null) => void;
   setView: (view: AppView) => void;
   setCustomActors: (actors: any[]) => void;
@@ -72,6 +59,7 @@ interface ApifyStore {
   setSearchQuery: (query: string) => void;
   setSidebarOpen: (open: boolean) => void;
   setActiveCategory: (category: ActorCategory | 'all') => void;
+  setApiKeyConfigured: (configured: boolean) => void;
   resetAll: () => void;
 }
 
@@ -134,16 +122,24 @@ export const useApifyStore = create<ApifyStore>((set, get) => ({
   searchHistory: [],
   searchQuery: '',
   sidebarOpen: true,
+  apiKeyConfigured: false,
   activeCategory: 'all',
 
   allActors: () => {
     const { customActors } = get();
     const convertedCustom = customActors.map((a) => {
-      // If it's already converted (has inputSchema as array), use as-is
       if (a.isCustom) return a;
       return dbActorToApifyActor(a);
     });
     return [...apifyActors, ...convertedCustom];
+  },
+
+  // Get API key from localStorage and return as headers
+  getApiKeyHeaders: () => {
+    if (typeof window === 'undefined') return {};
+    const key = localStorage.getItem('apify_api_key');
+    if (!key) return {};
+    return { 'x-apify-key': key };
   },
 
   setActor: (actor) => {
@@ -211,6 +207,7 @@ export const useApifyStore = create<ApifyStore>((set, get) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setActiveCategory: (category) => set({ activeCategory: category }),
+  setApiKeyConfigured: (configured) => set({ apiKeyConfigured: configured }),
 
   resetAll: () =>
     set({

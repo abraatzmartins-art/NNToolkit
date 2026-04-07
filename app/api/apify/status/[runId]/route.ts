@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiKey } from '@/lib/db';
+import { getApiKeyFromRequest } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { runId } = await params;
-    const apiKey = getApiKey();
+    const apiKey = getApiKeyFromRequest(request);
 
     if (!apiKey) {
       return NextResponse.json({ error: 'Chave API não configurada' }, { status: 400 });

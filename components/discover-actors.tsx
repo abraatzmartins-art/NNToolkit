@@ -117,7 +117,14 @@ export function DiscoverActors() {
     setHasSearched(true);
 
     try {
-      const res = await fetch(`/api/apify/discover?query=${encodeURIComponent(searchQuery)}&limit=20`);
+      const apiKey = localStorage.getItem('apify_api_key');
+      if (!apiKey) {
+        toast.error('Chave API não configurada', { description: 'Vá em Configurações e salve sua chave API.' });
+        return;
+      }
+      const res = await fetch(`/api/apify/discover?query=${encodeURIComponent(searchQuery)}&limit=20`, {
+        headers: { 'x-apify-key': apiKey },
+      });
       const data = await res.json();
 
       if (!res.ok) {
@@ -158,7 +165,10 @@ export function DiscoverActors() {
     }));
 
     try {
-      const res = await fetch(`/api/apify/actor-info?actorId=${encodeURIComponent(actor.actorId)}`);
+      const apiKey = localStorage.getItem('apify_api_key');
+      const res = await fetch(`/api/apify/actor-info?actorId=${encodeURIComponent(actor.actorId)}`, {
+        headers: apiKey ? { 'x-apify-key': apiKey } : {},
+      });
       const data = await res.json();
 
       if (!res.ok) {

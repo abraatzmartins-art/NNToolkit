@@ -1,12 +1,11 @@
 // =============================================
-// Memory-based store for cloud deployment (Vercel)
-// Works without SQLite/Prisma
-// API key can be set via UI (stored in memory)
-// or via environment variable APIFY_API_KEY
+// API Key helper for cloud (Vercel) deployment
+// Priority: request header > environment variable > memory
 // =============================================
 
-// In-memory storage
 let memoryApiKey: string | null = null;
+
+// History (in-memory, resets on serverless cold start)
 const memoryHistory: Array<{
   id: string;
   actorId: string;
@@ -34,19 +33,32 @@ const memoryCustomActors: Array<{
   createdAt: string;
 }> = [];
 
-// Get API key: environment variable takes priority, then memory
-export function getApiKey(): string | null {
-  return process.env.APIFY_API_KEY || memoryApiKey;
+/**
+ * Get API key from request.
+ * Priority: x-apify-key header > APIFY_API_KEY env var > memory
+ */
+export function getApiKeyFromRequest(request?: Request): string | null {
+  // 1. Check header (sent from frontend localStorage)
+  if (request) {
+    const headerKey = request.headers.get('x-apify-key');
+    if (headerKey && headerKey.startsWith('apify_api_')) {
+      return headerKey;
+    }
+  }
+  // 2. Check environment variable
+  if (process.env.APIFY_API_KEY) {
+    return process.env.APIFY_API_KEY;
+  }
+  // 3. Check memory (last resort, only works in long-running server)
+  return memoryApiKey;
 }
 
-// Set API key in memory
-export function setApiKey(key: string): void {
+export function setApiKeyInMemory(key: string): void {
   memoryApiKey = key;
 }
 
-// Check if API key is configured
-export function isApiKeyConfigured(): boolean {
-  return !!(process.env.APIFY_API_KEY || memoryApiKey);
+export function isEnvVarConfigured(): boolean {
+  return !!process.env.APIFY_API_KEY;
 }
 
 // History functions
@@ -76,11 +88,6 @@ export function addToHistory(data: {
   };
   memoryHistory.push(item);
   return item;
-}
-
-export function updateHistoryRunId(oldRunId: string | null, newRunId: string) {
-  const item = memoryHistory.find(h => h.runId === oldRunId);
-  if (item) item.runId = newRunId;
 }
 
 export function updateHistoryResults(runId: string, count: number) {
@@ -123,7 +130,6 @@ export function addCustomActor(data: {
 }) {
   const existing = getCustomActorById(data.actorId);
   if (existing) return null;
-
   const item = {
     id: crypto.randomUUID(),
     actorId: data.actorId,

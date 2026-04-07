@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
   Loader2, CheckCircle2, XCircle, Clock, Ban,
-  RotateCcw,
 } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ComponentType<any> }> = {
@@ -22,7 +21,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.C
 
 export function RunStatusIndicator() {
   const { currentRun, setRun, results } = useApifyStore();
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(Date.now());
 
   const config = statusConfig[currentRun.status] || statusConfig.idle;
@@ -33,19 +32,37 @@ export function RunStatusIndicator() {
     if (currentRun.status === 'running' && currentRun.runId) {
       startTimeRef.current = Date.now();
 
-      pollIntervalRef.current = setInterval(async () => {
+      const poll = async () => {
         try {
           const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
           setRun({ elapsed });
 
-          const res = await fetch(`/api/apify/status/${currentRun.runId}`);
+          // Get API key from localStorage and send as header
+          const apiKey = typeof window !== 'undefined' ? localStorage.getItem('apify_api_key') : null;
+          if (!apiKey) {
+            setRun({ status: 'failed', error: 'Chave API não configurada. Vá em Configurações.' });
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            return;
+          }
+
+          const res = await fetch(`/api/apify/status/${currentRun.runId}`, {
+            headers: { 'x-apify-key': apiKey },
+          });
           const data = await res.json();
+
+          if (!res.ok) {
+            setRun({ status: 'failed', error: data.error || 'Erro ao verificar status' });
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            return;
+          }
 
           if (data.status === 'SUCCEEDED') {
             setRun({ status: 'completed', progress: 100 });
 
             // Fetch results
-            const resultsRes = await fetch(`/api/apify/results/${currentRun.runId}?limit=200`);
+            const resultsRes = await fetch(`/api/apify/results/${currentRun.runId}?limit=200`, {
+              headers: { 'x-apify-key': apiKey },
+            });
             const resultsData = await resultsRes.json();
             if (resultsRes.ok) {
               useApifyStore.getState().setResults(resultsData.items || []);
@@ -53,17 +70,21 @@ export function RunStatusIndicator() {
 
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           } else if (data.status === 'FAILED' || data.status === 'ABORTED' || data.status === 'TIMED-OUT') {
-            setRun({ status: 'failed', error: 'Execução falhou' });
+            setRun({ status: 'failed', error: `Execução falhou: ${data.status}` });
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           } else {
             setRun({
               progress: typeof data.progress === 'number' ? data.progress : Math.min(elapsed * 2, 95),
             });
           }
-        } catch {
-          // Continue polling
+        } catch (err: any) {
+          console.error('Poll error:', err);
         }
-      }, 3000);
+      };
+
+      // Poll immediately, then every 3 seconds
+      poll();
+      pollIntervalRef.current = setInterval(poll, 3000);
 
       return () => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -113,7 +134,7 @@ export function RunStatusIndicator() {
             <p className="text-xs text-muted-foreground">
               {currentRun.status === 'running' && `Tempo: ${formatTime(currentRun.elapsed)}`}
               {currentRun.status === 'completed' && `${results.length} resultados obtidos`}
-              {currentRun.status === 'failed' && currentRun.error}
+              {currentRun.status === 'failed' && (currentRun.error || 'Erro desconhecido')}
             </p>
           </div>
         </div>

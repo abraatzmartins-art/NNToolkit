@@ -215,9 +215,20 @@ function ConfigureView() {
     try {
       setRun({ status: 'running', progress: 0, elapsed: 0, error: null, runId: null });
 
+      // Get API key from localStorage
+      const apiKey = localStorage.getItem('apify_api_key');
+      if (!apiKey) {
+        setRun({ status: 'failed', error: 'Chave API não configurada. Vá em Configurações (engrenagem) e salve sua chave.' });
+        toast.error('Chave API não configurada', { description: 'Vá em Configurações e salve sua chave API.' });
+        return;
+      }
+
       const res = await fetch('/api/apify/run', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-apify-key': apiKey,
+        },
         body: JSON.stringify({
           actorId: selectedActor.id,
           input,
